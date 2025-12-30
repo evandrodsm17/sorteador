@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorteador Pro - Full Responsive</title>
+    <style>
+        :root {
+            --bg: #05070a;
+            --card: rgba(17, 24, 39, 0.9);
+            --primary: #8b5cf6;
+            --secondary: #06b6d4;
+            --accent: #f43f5e;
+            --text: #f8fafc;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            background-image: radial-gradient(circle at 50% -20%, #1e1b4b, transparent);
+            color: var(--text);
+            margin: 0;
+            padding: 10px;
+            min-height: 100vh;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: clamp(1.2rem, 4vw, 2.2rem);
+            font-weight: 900;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 20px 0;
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 1024px) {
+            .main-container { flex-direction: row; align-items: flex-start; }
+            .side-panel { width: 300px; flex-shrink: 0; }
+            .center-panel { flex: 1; overflow: hidden; }
+            .right-panel { width: 320px; flex-shrink: 0; }
+        }
+
+        .glass-panel {
+            background: var(--card);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        textarea {
+            width: 100%;
+            height: 90px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: #fff;
+            padding: 10px;
+            margin: 5px 0 15px;
+            font-size: 0.85rem;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            transition: 0.2s;
+            width: 100%;
+            padding: 12px;
+        }
+
+        .btn-primary { background: var(--primary); color: white; margin-top: 10px; }
+        .btn-reset { 
+            background: var(--accent);
+            color: var(--text); 
+            border: 1px solid var(--accent); 
+            margin-top: 20px;
+            font-weight: 600;
+            font-size: 0.90rem; 
+            opacity: 0.6;
+        }
+        .btn-reset:hover { opacity: 1; background: var(--accent); color: white; }
+
+        #btnGirar {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: white;
+            font-size: 1.2rem;
+            max-width: 300px;
+            margin: 0 auto 20px;
+            display: none;
+        }
+
+        /* Central - Roleta com container responsivo */
+        .center-panel { text-align: center; }
+        #canvas-wrapper {
+            position: relative;
+            width: 95vw;
+            max-width: 450px; /* Limite para PC */
+            aspect-ratio: 1 / 1;
+            margin: 0 auto;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: auto !important;
+            border-radius: 50%;
+            transition: transform 5s cubic-bezier(0.1, 0, 0.1, 1);
+        }
+
+        #ponteiro {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid var(--accent);
+            z-index: 10;
+        }
+
+        /* Tabela Histórico */
+        .table-container { max-height: 400px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        td {
+            padding: 10px;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 2px solid var(--bg);
+            font-size: 0.9rem;
+        }
+        .time-badge { color: var(--secondary); font-weight: bold; float: right; }
+
+        /* Modal Resultado */
+        #modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: #111827;
+            border: 2px solid var(--primary);
+            border-radius: 25px;
+            padding: 30px;
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .win-title { 
+            font-size: clamp(1.8rem, 8vw, 2.8rem); 
+            color: #fff; 
+            margin: 15px 0; 
+            overflow-wrap: break-word; /* Garante que o nome do time não quebre o modal */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🏆 SORTEADOR SUPREME</h1>
+
+    <div class="main-container">
+        <div class="side-panel glass-panel">
+            <h3 style="margin-top:0">Configuração</h3>
+            <textarea id="listaPessoas" placeholder="Pessoas (uma por linha)..."></textarea>
+            <textarea id="listaTimes" placeholder="Times (um por linha)..."></textarea>
+            <button class="btn-primary" onclick="configurarSorteio()">SALVAR LISTAS</button>
+            <button class="btn-reset" onclick="resetarTudo()">Resetar Tudo</button>
+        </div>
+
+        <div class="center-panel">
+            <button id="btnGirar" onclick="girarRoleta()">GIRAR ROLETA</button>
+            <div id="canvas-wrapper">
+                <div id="ponteiro"></div>
+                <canvas id="roleta" width="500" height="500"></canvas>
+            </div>
+            <p id="statusTxt" style="color: var(--secondary); font-size: 0.9rem; margin-top: 15px;"></p>
+        </div>
+
+        <div class="right-panel glass-panel">
+            <h3 style="margin-top:0">Histórico</h3>
+            <div class="table-container">
+                <table id="tabelaResultados">
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal">
+        <div class="modal-content">
+            <h2 id="modalPessoa" style="margin:0; font-weight: 400;"></h2>
+            <p style="color: #94a3b8; margin: 10px 0;">vai jogar com:</p>
+            <h1 id="modalTime" class="win-title"></h1>
+            <button class="btn-primary" onclick="fecharModal()">OK, PRÓXIMO!</button>
+        </div>
+    </div>
+
+<script>
+    let dados = { pessoas: [], times: [], historico: [] };
+    let girando = false;
+
+    window.onload = () => {
+        const salvo = localStorage.getItem('sorteador_responsive_v4');
+        if (salvo) {
+            dados = JSON.parse(salvo);
+            atualizarTabela();
+            if (dados.times.length > 0) {
+                document.getElementById('btnGirar').style.display = 'block';
+                desenharRoleta();
+                atualizarStatus();
+            }
+        }
+    };
+
+    function salvar() { localStorage.setItem('sorteador_responsive_v4', JSON.stringify(dados)); }
+
+    function configurarSorteio() {
+        const pTxt = document.getElementById('listaPessoas').value.trim();
+        const tTxt = document.getElementById('listaTimes').value.trim();
+        if(!pTxt || !tTxt) return alert("Preencha os campos.");
+        dados.pessoas = pTxt.split('\n').map(x => x.trim()).filter(x => x !== "");
+        dados.times = tTxt.split('\n').map(x => x.trim()).filter(x => x !== "");
+        dados.historico = [];
+        salvar();
+        location.reload();
+    }
+
+    function desenharRoleta() {
+        const canvas = document.getElementById('roleta');
+        const ctx = canvas.getContext('2d');
+        const centro = 250;
+        const total = dados.times.length;
+        const slice = (2 * Math.PI) / total;
+
+        ctx.clearRect(0,0,500,500);
+        
+        // Ajuste de fonte baseado na quantidade de fatias
+        let fontSize = total > 15 ? 10 : (total > 8 ? 12 : 16);
+
+        dados.times.forEach((time, i) => {
+            ctx.beginPath();
+            ctx.fillStyle = `hsl(${(i * 360) / total}, 70%, 45%)`;
+            ctx.moveTo(centro, centro);
+            ctx.arc(centro, centro, 240, i * slice, (i + 1) * slice);
+            ctx.fill();
+            
+            ctx.save();
+            ctx.translate(centro, centro);
+            ctx.rotate(i * slice + slice / 2);
+            ctx.fillStyle = "white";
+            ctx.font = `bold ${fontSize}px sans-serif`;
+            ctx.textAlign = "right";
+            
+            // Limita o texto para não encavalar no centro
+            const nomeCurto = time.length > 15 ? time.substring(0, 13) + ".." : time;
+            ctx.fillText(nomeCurto, 230, 5);
+            ctx.restore();
+        });
+    }
+
+    function girarRoleta() {
+        if(girando || dados.pessoas.length === 0) return;
+        girando = true;
+        const index = Math.floor(Math.random() * dados.times.length);
+        const fatiaDeg = 360 / dados.times.length;
+        const voltas = 10 * 360;
+        const destinoFinal = 270 - (index * fatiaDeg) - (fatiaDeg / 2);
+        
+        document.getElementById('roleta').style.transform = `rotate(${voltas + destinoFinal}deg)`;
+
+        setTimeout(() => {
+            const pessoa = dados.pessoas.shift();
+            const time = dados.times.splice(index, 1)[0];
+            
+            document.getElementById('modalPessoa').innerText = pessoa;
+            document.getElementById('modalTime').innerText = time;
+            document.getElementById('modal').style.display = 'flex';
+            
+            dados.historico.unshift({ pessoa, time });
+            girando = false;
+        }, 5100);
+    }
+
+    function fecharModal() {
+        document.getElementById('modal').style.display = 'none';
+        salvar();
+        const canvas = document.getElementById('roleta');
+        canvas.style.transition = 'none';
+        canvas.style.transform = 'rotate(0deg)';
+        setTimeout(() => {
+            canvas.style.transition = 'transform 5s cubic-bezier(0.1, 0, 0.1, 1)';
+            atualizarTabela();
+            atualizarStatus();
+            if(dados.times.length > 0) desenharRoleta();
+            else document.getElementById('btnGirar').style.display = 'none';
+        }, 50);
+    }
+
+    function atualizarTabela() {
+        document.querySelector('#tabelaResultados tbody').innerHTML = dados.historico.map(h => `
+            <tr><td>${h.pessoa} <span class="time-badge">${h.time}</span></td></tr>
+        `).join('');
+    }
+
+    function atualizarStatus() {
+        document.getElementById('statusTxt').innerText = `Próximo: ${dados.pessoas[0] || '-'} | Restam: ${dados.pessoas.length}`;
+    }
+
+    function resetarTudo() {
+        if(confirm("Apagar dados e reiniciar?")) {
+            localStorage.removeItem('sorteador_responsive_v4');
+            location.reload();
+        }
+    }
+</script>
+</body>
+</html>
