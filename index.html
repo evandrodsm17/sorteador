@@ -104,12 +104,11 @@
             display: none;
         }
 
-        /* Central - Roleta com container responsivo */
         .center-panel { text-align: center; }
         #canvas-wrapper {
             position: relative;
             width: 95vw;
-            max-width: 450px; /* Limite para PC */
+            max-width: 450px;
             aspect-ratio: 1 / 1;
             margin: 0 auto;
         }
@@ -133,7 +132,6 @@
             z-index: 10;
         }
 
-        /* Tabela Histórico */
         .table-container { max-height: 400px; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; }
         td {
@@ -144,7 +142,6 @@
         }
         .time-badge { color: var(--secondary); font-weight: bold; float: right; }
 
-        /* Modal Resultado */
         #modal {
             display: none;
             position: fixed;
@@ -170,7 +167,7 @@
             font-size: clamp(1.8rem, 8vw, 2.8rem); 
             color: #fff; 
             margin: 15px 0; 
-            overflow-wrap: break-word; /* Garante que o nome do time não quebre o modal */
+            overflow-wrap: break-word;
         }
     </style>
 </head>
@@ -234,11 +231,24 @@
 
     function salvar() { localStorage.setItem('sorteador_responsive_v4', JSON.stringify(dados)); }
 
+    // Função para embaralhar arrays de forma aleatória
+    function embaralhar(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
     function configurarSorteio() {
         const pTxt = document.getElementById('listaPessoas').value.trim();
         const tTxt = document.getElementById('listaTimes').value.trim();
         if(!pTxt || !tTxt) return alert("Preencha os campos.");
-        dados.pessoas = pTxt.split('\n').map(x => x.trim()).filter(x => x !== "");
+        
+        // Criamos as listas e embaralhamos a de pessoas imediatamente
+        let listaP = pTxt.split('\n').map(x => x.trim()).filter(x => x !== "");
+        dados.pessoas = embaralhar(listaP); 
+        
         dados.times = tTxt.split('\n').map(x => x.trim()).filter(x => x !== "");
         dados.historico = [];
         salvar();
@@ -253,8 +263,6 @@
         const slice = (2 * Math.PI) / total;
 
         ctx.clearRect(0,0,500,500);
-        
-        // Ajuste de fonte baseado na quantidade de fatias
         let fontSize = total > 15 ? 10 : (total > 8 ? 12 : 16);
 
         dados.times.forEach((time, i) => {
@@ -271,7 +279,6 @@
             ctx.font = `bold ${fontSize}px sans-serif`;
             ctx.textAlign = "right";
             
-            // Limita o texto para não encavalar no centro
             const nomeCurto = time.length > 15 ? time.substring(0, 13) + ".." : time;
             ctx.fillText(nomeCurto, 230, 5);
             ctx.restore();
@@ -289,6 +296,7 @@
         document.getElementById('roleta').style.transform = `rotate(${voltas + destinoFinal}deg)`;
 
         setTimeout(() => {
+            // Agora a pessoa retirada já faz parte de uma lista embaralhada
             const pessoa = dados.pessoas.shift();
             const time = dados.times.splice(index, 1)[0];
             
