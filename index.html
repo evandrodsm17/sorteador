@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sorteador Visual Automático</title>
+    <title>BIG EV Sorteador</title>
 
     <style>
       :root {
@@ -15,9 +15,11 @@
         --text: #f8fafc;
         --border: rgba(255, 255, 255, 0.08);
       }
+
       * {
         box-sizing: border-box;
       }
+
       body {
         margin: 0;
         padding: 15px;
@@ -30,14 +32,32 @@
         );
         color: var(--text);
       }
+
       h1 {
         text-align: center;
-        font-size: clamp(1.3rem, 4vw, 2.2rem);
-        font-weight: 900;
-        background: linear-gradient(to right, var(--primary), var(--secondary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-size: clamp(1.2rem, 3vw, 2rem);
       }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 8px;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid var(--border);
+        color: white;
+      }
+
+      textarea {
+        height: 110px;
+        resize: none;
+      }
+
+      input[type="range"] {
+        accent-color: var(--primary);
+      }
+
       .main {
         max-width: 1300px;
         margin: auto;
@@ -45,11 +65,13 @@
         flex-direction: column;
         gap: 15px;
       }
+
       @media (min-width: 1024px) {
         .main {
           flex-direction: row;
         }
       }
+
       .glass {
         background: var(--card);
         border: 1px solid var(--border);
@@ -58,16 +80,7 @@
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         flex: 1;
       }
-      textarea {
-        width: 100%;
-        height: 110px;
-        background: rgba(0, 0, 0, 0.35);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        color: white;
-        padding: 10px;
-        margin-bottom: 10px;
-      }
+
       button {
         width: 100%;
         border: none;
@@ -76,43 +89,47 @@
         font-weight: 700;
         cursor: pointer;
       }
+
       .btn-primary {
         background: linear-gradient(135deg, var(--secondary), var(--primary));
         color: white;
       }
+
       .btn-sortear {
         background: var(--primary);
         color: white;
-        margin-top: 10px;
+        margin-bottom: 10px;
       }
+
       .btn-reset {
         background: var(--accent);
         color: white;
-        margin-top: 10px;
-        display: none;
       }
+
       .lista {
         max-height: 380px;
         overflow-y: auto;
       }
+
       .item {
         padding: 10px;
         margin: 6px 0;
         border-radius: 8px;
         background: rgba(255, 255, 255, 0.05);
-        transition: 0.15s;
         text-align: center;
       }
+
       .item.active {
         background: linear-gradient(135deg, var(--primary), var(--secondary));
-        color: white;
         transform: scale(1.05);
         box-shadow: 0 0 14px rgba(139, 92, 246, 0.8);
       }
+
       .resultado {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.15);
         font-weight: 600;
       }
+
       .hidden {
         display: none;
       }
@@ -120,115 +137,100 @@
   </head>
 
   <body>
-    <h1>🎯 SORTEADOR AUTOMÁTICO</h1>
+    <h1>🎲 BIG EV SORTEADOR</h1>
 
     <div class="main">
       <!-- CONFIG -->
       <div class="glass" id="config">
         <h3>Configuração</h3>
 
-        <textarea
-          id="inputPessoas"
-          placeholder="Pessoas (1 por linha)"
-        ></textarea>
-        <textarea id="inputTimes" placeholder="Times (1 por linha)"></textarea>
+        <input id="labelA" placeholder="Nome da Lista A" />
+        <textarea id="inputA" placeholder="Itens da Lista A"></textarea>
+
+        <input id="labelB" placeholder="Nome da Lista B" />
+        <textarea id="inputB" placeholder="Itens da Lista B"></textarea>
 
         <label>Velocidade</label>
-        <input
-          type="range"
-          min="50"
-          max="200"
-          value="100"
-          id="velocidade"
-          style="width: 100%"
-        />
+        <input type="range" min="50" max="200" value="100" id="velocidade" />
 
-        <button class="btn-primary" onclick="salvar()">SALVAR LISTAS</button>
-        <button
-          class="btn-sortear hidden"
-          id="btnSortear"
-          onclick="sortearTudo()"
-        >
-          SORTEAR
-        </button>
-        <button class="btn-reset" id="btnReset" onclick="resetar()">
-          RESETAR
-        </button>
+        <button class="btn-primary" onclick="salvar()">SALVAR</button>
       </div>
 
-      <!-- PESSOAS -->
-      <div class="glass">
-        <h3>Pessoas</h3>
-        <div id="listaPessoas" class="lista"></div>
+      <!-- CONTROLES -->
+      <div class="glass hidden" id="controls">
+        <button class="btn-sortear" onclick="sortearTudo()">SORTEAR</button>
+        <button class="btn-reset" onclick="resetar()">RESETAR</button>
       </div>
 
-      <!-- TIMES -->
-      <div class="glass">
-        <h3>Times</h3>
-        <div id="listaTimes" class="lista"></div>
+      <!-- LISTA A -->
+      <div class="glass hidden" id="boxA">
+        <h3 id="tituloA"></h3>
+        <div id="listaA" class="lista"></div>
+      </div>
+
+      <!-- LISTA B -->
+      <div class="glass hidden" id="boxB">
+        <h3 id="tituloB"></h3>
+        <div id="listaB" class="lista"></div>
       </div>
 
       <!-- RESULTADOS -->
-      <div class="glass">
+      <div class="glass hidden" id="boxR">
         <h3>Resultados</h3>
         <div id="listaResultados" class="lista"></div>
       </div>
     </div>
 
     <script>
-      const PAUSA_APOS_TIME = 800; // 0.8s (ajuste se quiser)
-
+      const PAUSA = 800;
       let sorteando = false;
 
       function salvar() {
-        const pessoas = inputPessoas.value
-          .split("\n")
-          .map((x) => x.trim())
-          .filter(Boolean);
-        const times = inputTimes.value
-          .split("\n")
-          .map((x) => x.trim())
-          .filter(Boolean);
+        if (!inputA.value.trim() || !inputB.value.trim()) {
+          alert("Preencha as duas listas");
+          return;
+        }
 
-        if (!pessoas.length || !times.length)
-          return alert("Preencha as listas");
+        tituloA.innerText = labelA.value || "Lista A";
+        tituloB.innerText = labelB.value || "Lista B";
 
-        render("listaPessoas", pessoas);
-        render("listaTimes", times);
+        render(listaA, inputA.value);
+        render(listaB, inputB.value);
 
-        inputPessoas.value = "";
-        inputTimes.value = "";
-
-        inputPessoas.classList.add("hidden");
-        inputTimes.classList.add("hidden");
-
-        document.getElementById("btnSortear").classList.remove("hidden");
-        document.getElementById("btnReset").style.display = "block";
+        config.classList.add("hidden");
+        controls.classList.remove("hidden");
+        boxA.classList.remove("hidden");
+        boxB.classList.remove("hidden");
+        boxR.classList.remove("hidden");
       }
 
-      function render(id, dados) {
-        const box = document.getElementById(id);
-        box.innerHTML = "";
-        dados.forEach((v) => {
-          const d = document.createElement("div");
-          d.className = "item";
-          d.innerText = v;
-          box.appendChild(d);
-        });
+      function render(container, texto) {
+        container.innerHTML = "";
+        texto
+          .split("\n")
+          .map((x) => x.trim())
+          .filter(Boolean)
+          .forEach((v) => {
+            const d = document.createElement("div");
+            d.className = "item";
+            d.innerText = v;
+            container.appendChild(d);
+          });
       }
 
-      function animar(lista, callback) {
+      function animar(lista, cb) {
         let i = 0;
-        const vel = Number(document.getElementById("velocidade").value);
-        const ciclos = Math.floor((Math.random() * 10 + 15) * (vel / 100));
+        const vel = +velocidade.value;
+        const ciclos = Math.floor(Math.random() * 10 + 15);
 
         const timer = setInterval(() => {
           lista.forEach((el) => el.classList.remove("active"));
           lista[i % lista.length].classList.add("active");
           i++;
+
           if (i >= ciclos) {
             clearInterval(timer);
-            callback(lista[(i - 1) % lista.length]);
+            cb(lista[(i - 1) % lista.length]);
           }
         }, vel);
       }
@@ -240,28 +242,27 @@
       }
 
       function proximo() {
-        const pessoas = [...document.querySelectorAll("#listaPessoas .item")];
-        const times = [...document.querySelectorAll("#listaTimes .item")];
+        const a = [...listaA.children];
+        const b = [...listaB.children];
 
-        if (!pessoas.length || !times.length) {
+        if (!a.length || !b.length) {
           sorteando = false;
           return;
         }
 
-        animar(pessoas, (pessoa) => {
-          animar(times, (time) => {
-            // mantém o destaque no time por um tempo
+        animar(a, (elA) => {
+          animar(b, (elB) => {
             setTimeout(() => {
               const r = document.createElement("div");
               r.className = "item resultado";
-              r.innerHTML = `${pessoa.innerText} ➜ ${time.innerText}`;
+              r.innerText = `${elA.innerText} ➜ ${elB.innerText}`;
               listaResultados.prepend(r);
 
-              pessoa.remove();
-              time.remove();
+              elA.remove();
+              elB.remove();
 
               setTimeout(proximo, 400);
-            }, PAUSA_APOS_TIME);
+            }, PAUSA);
           });
         });
       }
